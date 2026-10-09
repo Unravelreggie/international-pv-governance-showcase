@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {scopes,inspectScope,calendarMonthsBefore,validDate,visibleScopes} from "./logic.mjs";
+test("fictional signed scope is ready only with its evidence",()=>{assert.equal(inspectScope(scopes[0]).state,"ready_for_review");assert.ok(inspectScope({...scopes[0],signatureEvidence:false}).reasons.includes("signed_evidence_missing"))});
+test("a draft file does not establish a signed agreement",()=>assert.ok(inspectScope(scopes[1]).reasons.includes("signature_not_confirmed")));
+test("unknown status stays unknown rather than asserted absent",()=>assert.ok(inspectScope(scopes[2]).reasons.includes("agreement_unknown")));
+test("expired approval or absent owner requires review",()=>{assert.ok(inspectScope(scopes[3]).reasons.includes("approval_review"));assert.ok(inspectScope(scopes[2]).reasons.includes("owner_unassigned"))});
+test("calendar subtraction clamps month end instead of rolling forward",()=>{assert.equal(calendarMonthsBefore("2026-05-31"),"2026-02-28");assert.equal(calendarMonthsBefore("2024-05-31"),"2024-02-29")});
+test("impossible dates do not create invented deadlines",()=>{assert.equal(validDate("2026-02-30"),false);assert.equal(calendarMonthsBefore("unknown"),null);assert.ok(inspectScope({...scopes[0],firstSale:"2026-02-30"}).reasons.includes("invalid_sale_date"))});
+test("display filtering does not mutate underlying scope records",()=>{assert.equal(visibleScopes(scopes,"SYN-REGION-B","all").length,2);assert.equal(scopes.length,4)});
